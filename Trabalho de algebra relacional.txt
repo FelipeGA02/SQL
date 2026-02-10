@@ -1,0 +1,67 @@
+-- a) Projetar o primeiro nome e o último nome dos atores de sexo feminino
+mulheres = σ gender = 'F' (actors)
+-- π first_name,last_name (mulheres)
+
+-- b) Projetar o nome dos filmes com ano superior à 1999
+filmes1999 = σ year > 1999 (movies)
+-- π name (filmes1999)
+
+-- c) Projetar o nome do filme e o nome do diretor de cada filme
+dir_moviedir = (directors) ⨝ id = director_id (movies_directors)
+mov_dir_moviedir = (movies) ⨝ id = movie_id (dir_moviedir)
+-- π name, first_name,last_name (mov_dir_moviedir)
+
+-- d) Projetar o nome do filme, nome do ator e o papel que cada ator teve no filme para filmes com ranking acima da nota 6
+filmesmais6 = σ rank > 6 (movies)
+mov_roles = (filmesmais6) ⨝ id = movie_id (roles)
+act_mov_roles = (actors) ⨝ id = actor_id (mov_roles)
+-- π name, first_name,last_name, role (act_mov_roles)
+
+-- e) Projetar o nome do diretor e o número de filmes que cada diretor dirigiu
+total_movies = γ director_id; sum(movie_id) -> TOTAL (movies_directors)
+dir_name_total_movies = (total_movies) ⨝ director_id = id (directors)
+-- π first_name,last_name, TOTAL (dir_name_total_movies)
+
+-- f) Projetar o gênero e o número de filmes de cada gênero
+-- γ genre; count(movie_id) -> TOTAL (movies_genres)
+
+-- g) Projetar o gênero, o ranking (nota) médio, mínimo e máximo dos filmes do gênero
+movies_movgen = (movies) ⨝ id = movie_id (movies_genres)
+-- γ genre; avg(rank) -> Nota_Media, min(rank) -> Minimo, max(rank) -> Maximo (movies_movgen)
+
+-- h) Projetar o primeiro nome e o último nome dos atores que são diretores
+act_fullname = π first_name, last_name (actors)
+dir_fullname = π first_name, last_name (directors)
+-- act_fullname ∩ dir_fullname
+
+-- i) Projetar o primeiro nome e o último nome dos atores que não são diretores
+-- act_fullname - dir_fullname
+
+-- j) Projetar o primeiro nome e o último nome dos atores e diretores
+-- act_fullname ∪ dir_fullname
+
+-- k) Projetar o nome dos filmes que não são dirigidos por nenhum diretor
+movies_id = π id (movies)
+moviesdir_id = π director_id (movies_directors)
+idmovies_nodir = ρ idmoviesnodir <- movies.id (movies_id - moviesdir_id)
+movies_nodir = (idmovies_nodir) ⨝ idmoviesnodir = id (movies)
+-- π name (movies_nodir)
+
+-- l) Projetar primeiro nome e o último nome dos atores que não atuaram em pelo menos dois filmes
+count_act = γ actor_id; count(movie_id) -> TOTAL (roles)
+id_tot_act2movies = σ TOTAL ≥ 2 (count_act)
+id_act2moviesduble = π roles.actor_id (id_tot_act2movies)
+id_actors = π id (actors)
+id_act2movies = ρ idactors <- actors.id (id_actors - id_act2moviesduble)
+act2movies = (id_act2movies) ⨝ idactors = actors.id (actors)
+-- π first_name,last_name (act2movies)
+
+-- m)	Projetar, por gênero e ano, o número médio de filmes com menos de dois atores atuando
+count_movie = γ movie_id; COUNT(actor_id) -> TOTAL ( roles )
+id_tot_mov2actors = σ TOTAL ≥ 2 (count_movie)
+id_mov2actorsdouble = π roles.movie_id (id_tot_mov2actors)
+id_movies = π id (movies)
+id_mov2actors = ρ idmovies <- movies.id (id_movies - id_mov2actorsdouble)
+mov2actors = (id_mov2actors) ⨝ idmovies = movies.id (movies)
+mov2actorsgenre = (mov2actors) ⨝ idmovies = movie_id (movies_genres)
+-- γ genre,year; count(*) -> media (mov2actorsgenre)
