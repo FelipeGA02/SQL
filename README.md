@@ -1,2 +1,2 @@
 # SQL
-Meus estudos com SQL
+My studies with SQL
